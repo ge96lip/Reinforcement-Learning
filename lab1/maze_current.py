@@ -1,10 +1,7 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import time
-from IPython import display
-import scipy.stats as stats
-
 import random
+import numpy as np
+
+
 
 # Implemented methods
 methods = ['DynProg', 'ValIter']
@@ -127,60 +124,56 @@ class Maze:
                 
         return rows_minotaur, cols_minotaur
 
-    def __move(self, state, action, pick_random = True):
-        """ Makes a step in the maze, given a current position and an action. 
-            If the action STAY or an inadmissible action is used, the player stays in place.
-        
-            :return list of tuples next_state: Possible states ((x,y), (x',y')) on the maze that the system can transition to.
+    def move(self, state, action, pick_random=True):
         """
-        if self.states[state] == 'Eaten' or self.states[state] == 'Win': # In these states, the game is over
+        Makes a step in the maze, given a current state and an action.
+        If the action is STAY or an inadmissible action, the player stays in place.
+
+        :param state: Current state of the system.
+        :param action: Action taken by the player.
+        :param pick_random: If True, the Minotaur's movements are randomized.
+        :return: List of possible next states ((x, y), (x', y')) in the maze.
+        """
+        # Handle terminal states (game over)
+        if self.states[state] in ['Eaten', 'Win']:
             return [self.states[state]]
-        
-        else: 
-            row_player = self.states[state][0][0] + self.actions[action][0] # Row of the player's next position 
-            col_player = self.states[state][0][1] + self.actions[action][1] 
-            # Is the player getting out of the limits of the maze or hitting a wall?
-            impossible_action_player =  (row_player < 0 or row_player >= self.maze.shape[0] or 
-                                col_player < 0 or col_player >= self.maze.shape[1] or 
-                                (self.maze[row_player, col_player] == 1) # Check if the position is a wall
-            )
-            actions_minotaur = [[0, -1], [0, 1], [-1, 0], [1, 0]] # Possible moves for the Minotaur
-           
-            if self.allow_minotaur_stay:
-                actions_minotaur.append([0, 0])
-                
-            rows_minotaur, cols_minotaur = self.__move_minotaur(state, actions_minotaur, pick_random)
-            # Based on the impossiblity check return the next state.
-            if impossible_action_player:
-                # Stay in the current position if action is impossible
-                states = []
-                for i in range(len(rows_minotaur)):
-                    
-                    if (self.states[state][0][0], self.states[state][0][1]) == (rows_minotaur[i], cols_minotaur[i]):
-                        states.append('Eaten')
-                    
-                    elif (self.states[state][0][0], self.states[state][0][1]) == (np.where(self.maze == 2)[0][0], np.where(self.maze == 2)[1][0]):
-                        states.append('Win')
-                
-                    else:     
-                     # The player moves to the new position, and the minotaur moves randomly
-                        states.append(((self.states[state][0][0], self.states[state][0][1]), (rows_minotaur[i], cols_minotaur[i])))                
-                # print(f"states for {action} with positions_player: {self.states[state][0][0], self.states[state][0][1]} and position_minotaur {self.states[state][1][0], self.states[state][1][1]} are: ", states)
-                return states
-            else:  # The action is possible, the player moves to the new position
-                states = []
-                for i in range(len(rows_minotaur)):
-                    if (row_player, col_player) == (rows_minotaur[i], cols_minotaur[i]):
-                        # The player is caught by the minotaur
-                        states.append('Eaten')
-                    elif (row_player, col_player) == (np.where(self.maze == 2)[0][0], np.where(self.maze == 2)[1][0]):
-                        # The player reaches the exit without being caught
-                        states.append('Win')
-                    else:
-                        # The player moves to the new position, and the minotaur moves randomly
-                        states.append(((row_player, col_player), (rows_minotaur[i], cols_minotaur[i])))
-                # print(f"states for {action} with positions_player: {self.states[state][0][0], self.states[state][0][1]} and position_minotaur {self.states[state][1][0], self.states[state][1][1]} are: ", states)
-                return states
+
+        # Player's next position based on the action
+        row_player, col_player = (
+            self.states[state][0][0] + self.actions[action][0],
+            self.states[state][0][1] + self.actions[action][1]
+        )
+
+        # Check if the player's action is impossible
+        is_impossible_action = (
+            row_player < 0 or row_player >= self.maze.shape[0] or
+            col_player < 0 or col_player >= self.maze.shape[1] or
+            self.maze[row_player, col_player] == 1  # Wall check
+        )
+
+        # Minotaur's possible moves
+        minotaur_actions = [[0, -1], [0, 1], [-1, 0], [1, 0]]
+        if self.allow_minotaur_stay:
+            minotaur_actions.append([0, 0])
+        rows_minotaur, cols_minotaur = self.__move_minotaur(state, minotaur_actions, pick_random)
+
+        # Helper function to determine the resulting state
+        def determine_state(player_pos, minotaur_pos):
+            if player_pos == minotaur_pos:
+                return 'Eaten'
+            elif player_pos == tuple(np.where(self.maze == 2)):  # Exit position
+                return 'Win'
+            else:
+                return (player_pos, minotaur_pos)
+
+        # Generate next states
+        player_pos = (self.states[state][0][0], self.states[state][0][1]) if is_impossible_action else (row_player, col_player)
+        next_states = [
+            determine_state(player_pos, (rows_minotaur[i], cols_minotaur[i]))
+            for i in range(len(rows_minotaur))
+        ]
+
+        return next_states
 
     def __transitions(self):
         """ Computes the transition probabilities for every state action pair.
@@ -205,7 +198,7 @@ class Maze:
                     continue
 
                 # Get next possible states for the given action
-                next_states = self.__move(s, a)
+                next_states = self.move(s, a)
 
                 # Distribute probability equally among all valid next states
                 prob = 1.0 / len(next_states)
@@ -231,7 +224,7 @@ class Maze:
                     rewards[s, a] = self.GOAL_REWARD
                 
                 else:                
-                    next_states = self.__move(s,a)
+                    next_states = self.move(s,a)
                     next_s = next_states[0] # The reward does not depend on the next position of the minotaur, we just consider the first one
                     #print("next_s is: ", next_s)
                     if self.states[s][0] == next_s[0] and a != self.STAY: # The player hits a wall
@@ -243,7 +236,7 @@ class Maze:
     
     def simulate(self, start, policy, method):
         if method not in methods:
-            error = 'ERROR: the argument method must be in {}'.format(methods);
+            error = 'ERROR: the argument method must be in {}'.format(methods)
             raise NameError(error)
 
         path = list()
@@ -259,8 +252,7 @@ class Maze:
                 #s = next_s
                 
                 a = policy[s, t] # Move to next state given the policy and the current state
-                next_states = self.__move(s, a) 
-                print(len(next_states))
+                next_states = self.move(s, a) 
                 random_number = random.randint(0,len(next_states)-1)
                 next_s = next_states[random_number]
                 #next_s = next_states[0]
@@ -280,7 +272,7 @@ class Maze:
                     break
 
                 a = policy[s]
-                next_states = self.__move(s, a)  # Move to next state given the policy and the current state
+                next_states = self.move(s, a)  # Move to next state given the policy and the current state
                 random_number = random.randint(0,len(next_states)-1)
                 next_s = next_states[random_number]
                 path.append(next_s)
@@ -292,62 +284,4 @@ class Maze:
                 
             horizon = t   
         return [path, horizon]
-
     
-    
-    def survival_rate_horizon(self, start, policy):
-        states = set()
-        num_states = dict()
-        prob_states = dict()
-
-        states.add(start)
-        num_states[start] = 1
-        prob_states[start] = 1
-        
-        horizon = policy.shape[1]
-
-        t = 0
-        while t < horizon:
-            next_states = set()
-            next_num = dict()
-            next_prob = dict()
-            next_total = 0
-
-            #print("States at {}: unique {}, total {}".format(t, len(states), total_num_states))
-            for s in states:
-                
-                s_count = num_states[s]
-                s_prob = prob_states[s]
-                s = self.map[s]
-                action = policy[s, t]
-                new_states = self.__move(s, action)
-
-                each_ns_prob = s_prob / len(new_states)
-
-                for ns in new_states:
-                    next_num[ns] = next_num.get(ns, 0) + s_count
-                    next_prob[ns] = next_prob.get(ns, 0) + each_ns_prob
-
-                    next_states.add(ns)
-                    next_total += s_count
-
-            # nothing moving, break
-            if next_states == states:
-                break
-
-            states = next_states
-            num_states = next_num
-            prob_states = next_prob
-            t += 1
-
-        won = 0
-        dead = 0
-        for state, prob in prob_states.items():
-            if state == 'Eaten':
-                dead += prob
-            elif state == 'Win':
-                won += prob
-
-        print("T = {}, win {:06.2%}, dead {:06.2%}".format(horizon-1, won, dead))
-
-        return won

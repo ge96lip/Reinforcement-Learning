@@ -2,7 +2,7 @@ import numpy as np
 from collections import defaultdict
 from tqdm import trange
 
-from utils import decide_random, Experience, running_average
+from utils import decide_random, calculate_moving_average
 
 NUM_EPISODES = 50000
 INITIAL_STATE = ((0, 0), (6, 5), "NOKEYS")
@@ -46,7 +46,6 @@ class QLearning():
                 # Log any issues encountered during initialization
                 print(f"Error initializing state {state_idx} ({state}): {e}")
                 raise
-        self._last_experience = None
         
     def q(self, state, action):
         s = self.env.map[state]
@@ -54,7 +53,7 @@ class QLearning():
         q = self._q[s][a]
         return q
     
-    def _action_index(self, state, action):
+    def _a_idx(self, state, action):
         #print("original action is: ", action)
         valid_actions = self.env.possible_actions(state)
         
@@ -115,17 +114,16 @@ class QLearning():
                 action = self.compute_action(state=state, explore=True)
                 next_state, reward, done, _ = self.env.step(action, state)
                 # Update policy
-                last_state = Experience(
-                    episode=episode,
-                    state=state,
-                    action=action,
-                    reward=reward,
-                    next_state=next_state,
-                    done=done
-                )
+                last_state = {
+                    "episode": episode,
+                    "state": state,
+                    "action": action,
+                    "reward": reward,
+                    "next_state": next_state,
+                    "done": done
+                }
                 update_stats = self.update(last_state)
 
-                # Update stats
                 for k, v in update_stats.items():
                     stats[k].append(v)
                 episode_reward += reward
@@ -134,19 +132,14 @@ class QLearning():
                 # Update state
                 state = next_state
 
-            # Update stats
             stats["episode_reward"].append(episode_reward)
             stats["episode_length"].append(episode_length)
 
             # Show progress
-            avg_episode_length = running_average(stats["episode_length"])[-1]
-            avg_episode_reward = running_average(stats["episode_reward"])[-1]
             episodes.set_description(
                 f"Episode {episode} - "
-                f"Reward: {episode_reward:.1f} - "
-                f"Length: {episode_length} - "
-                f"Avg reward: {avg_episode_reward:.1f} - "
-                f"Avg length: {avg_episode_length:.1f}"
+                f"Avg reward: {(calculate_moving_average(stats["episode_reward"])[-1]):.1f} - "
+                f"Avg length: {(calculate_moving_average(stats["episode_length"])[-1]):.1f}"
             )
             initial_state_values.append(self.v(INITIAL_STATE))
             
@@ -154,15 +147,15 @@ class QLearning():
         
     def update(self, last_state):
         # Unpack last experience
-        state = last_state.state
-        action = last_state.action
-        reward = last_state.reward
-        next_state = last_state.next_state
+        state = last_state["state"]
+        action = last_state["action"]
+        reward = last_state["reward"]
+        next_state = last_state["next_state"]
 
         # Get indices
         s = self.env.map[state]
 
-        a = self._action_index(state, action)
+        a = self._a_idx(state, action)
         s_next = self.env.map[next_state]
         # Update Q-function
         self._n[s][a] += 1

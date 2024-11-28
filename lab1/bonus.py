@@ -296,7 +296,7 @@ def minotaur_maze_exit_probability(environment, agent):
     return exit_probability
 
 
-""""
+
 #for testing structural changes of the implementation: 
 NUM_EPISODES = 5000
 INITIAL_STATE = ((0, 0), (6, 5), "NOKEYS")
@@ -354,4 +354,3 @@ plt.legend()
 plt.grid()
 plt.show()
 
-"""

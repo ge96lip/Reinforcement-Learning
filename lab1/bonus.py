@@ -1,5 +1,8 @@
 import numpy as np
 from utils import decide_random
+import matplotlib.pyplot as plt 
+from q_agent import QLearning
+from sarsa_agent import SARSA
 
 class Maze:
 
@@ -205,8 +208,8 @@ class Maze:
             #valid_minotaur_moves = self._valid_minotaur_moves(state, chase=chase)
             action_minotaur = self.random_with_seed.choice(action_minotaur)
 
-            next_player_position = self.get_position(player_position, action, True)
-            next_minotaur_position = self.get_position(minotaur_position, action_minotaur, False)
+            next_player_position = self.get_position(player_position, action)
+            next_minotaur_position = self.get_position(minotaur_position, action_minotaur)
 
             x, y = next_player_position
             if next_player_position == next_minotaur_position:
@@ -293,8 +296,8 @@ def minotaur_maze_exit_probability(environment, agent):
     return exit_probability
 
 
-
-"""
+""""
+#for testing structural changes of the implementation: 
 NUM_EPISODES = 5000
 INITIAL_STATE = ((0, 0), (6, 5), "NOKEYS")
 maze = np.array([
@@ -321,23 +324,9 @@ agent_q_learning = QLearning(
         epsilon=epsilon1,
         q_init=0.1,
     )
-#_, values_epsilon1 = agent_q_learning.train(NUM_EPISODES)
-#exit_probability = minotaur_maze_exit_probability(env1, agent_q_learning)
-#print(f"Exit_probability for QLearning Agent: ", exit_probability)
-epsilon2 = 0.1
-alpha2 = (2/3)
-env1 = Maze(maze, seed= 6, expected_life=expected_life, minotaur_chase=True, keys=True)
-agent_sarsa = SARSA(
-        env=env1,
-        discount=gamma,
-        alpha=alpha2,
-        epsilon=epsilon2,
-        q_init=0.01,
-        delta = 0.99
-    )
-_, values_epsilon1 = agent_sarsa.train(NUM_EPISODES, decrease_epsilon=True)
-exit_probability = minotaur_maze_exit_probability(env1, agent_sarsa)
-print(f"Exit_probability for SARSA agent: ", exit_probability)
+_, values_epsilon1 = agent_q_learning.train(NUM_EPISODES)
+exit_probability = minotaur_maze_exit_probability(env1, agent_q_learning)
+print(f"Exit_probability for QLearning Agent: ", exit_probability)
 
 
 epsilon2 = 0.1
@@ -365,23 +354,4 @@ plt.legend()
 plt.grid()
 plt.show()
 
-env1 = Maze(maze, seed=6, expected_life=expected_life, minotaur_chase=True, keys=True)
-env2 = Maze(maze, seed=6, expected_life=expected_life, minotaur_chase=True, keys=True)
-
-epsilon1 = 0.1
-epsilon2 = 0.3
-
-values_epsilon1 = train_agent(env1, epsilon1, NUM_EPISODES)
-values_epsilon2 = train_agent(env2, epsilon2, NUM_EPISODES)
-
-# Plot the value function over episodes
-plt.figure(figsize=(10, 6))
-plt.plot(range(NUM_EPISODES), values_epsilon1, label=f"$\epsilon = {epsilon1}$")
-plt.plot(range(NUM_EPISODES), values_epsilon2, label=f"$\epsilon = {epsilon2}$")
-plt.xlabel("Episodes")
-plt.ylabel(f"Value Function $V(s_0)$")
-plt.title("Convergence of Value Function Over Episodes")
-plt.legend()
-plt.grid()
-plt.show()
 """

@@ -229,7 +229,8 @@ class Maze:
                     #print("next_s is: ", next_s)
                     if self.states[s][0] == next_s[0] and a != self.STAY: # The player hits a wall
                         rewards[s, a] = self.IMPOSSIBLE_REWARD
-                    
+                        # TODO: test this
+                        print("impossible reward assigned")
                     else: # Regular move
                         rewards[s, a] = self.STEP_REWARD
         return rewards

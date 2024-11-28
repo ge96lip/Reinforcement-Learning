@@ -106,7 +106,7 @@ class QLearning():
         for episode in episodes:
             # Reset environment data and initialize variables
             done = False
-            state = self.env.reset()
+            state = self.env.initial_state
             episode_reward, episode_length = 0, 0
 
             # Run episode

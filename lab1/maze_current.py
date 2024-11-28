@@ -6,14 +6,6 @@ import numpy as np
 # Implemented methods
 methods = ['DynProg', 'ValIter']
 
-# Some colours
-LIGHT_RED    = '#FFC4CC'
-LIGHT_GREEN  = '#95FD99'
-BLACK        = '#000000'
-WHITE        = '#FFFFFF'
-LIGHT_PURPLE = '#E8D0FF'
-LIGHT_ORANGE = '#FAE0C3'
-
 
 class Maze:
 
@@ -37,7 +29,6 @@ class Maze:
     
     STEP_REWARD = 0         #TODO
     GOAL_REWARD = 1         #TODO
-    IMPOSSIBLE_REWARD =  -100  #TODO
     MINOTAUR_REWARD = -1      #TODO
 
 
@@ -225,14 +216,9 @@ class Maze:
                 
                 else:                
                     next_states = self.move(s,a)
-                    next_s = next_states[0] # The reward does not depend on the next position of the minotaur, we just consider the first one
+                    #next_s = next_states[0] # The reward does not depend on the next position of the minotaur, we just consider the first one
                     #print("next_s is: ", next_s)
-                    if self.states[s][0] == next_s[0] and a != self.STAY: # The player hits a wall
-                        rewards[s, a] = self.IMPOSSIBLE_REWARD
-                        # TODO: test this
-                        print("impossible reward assigned")
-                    else: # Regular move
-                        rewards[s, a] = self.STEP_REWARD
+                    rewards[s, a] = self.STEP_REWARD
         return rewards
     
     def simulate(self, start, policy, method):

@@ -8,7 +8,6 @@ NUM_EPISODES = 50000
 INITIAL_STATE = ((0, 0), (6, 5), "NOKEYS")
 
 
-
 class QLearning(): 
     def __init__(
             self,
@@ -16,13 +15,11 @@ class QLearning():
             epsilon: float | str,
             discount: float, 
             alpha: float | None = None,
-            epsilon_decay_duration: int | None = None,
             q_init: float = 0,
     ):
         self.env = env
         self.discount = discount
         self.epsilon = epsilon
-        self.epsilon_decay_episodes = epsilon_decay_duration
         self.alpha = alpha
         self.q_init = q_init
         
@@ -85,20 +82,14 @@ class QLearning():
 
         epsilon = self.epsilon
 
-        if explore and decide_random(self.env._rng, epsilon):
-            # random_number = random.randint(0, len(valid_actions) - 1)
-            
-            # action = valid_actions[random_number]
-            action = self.env._rng.choice(valid_actions)
+        if explore and decide_random(self.env.random_with_seed, epsilon):
+
+            action = self.env.random_with_seed.choice(valid_actions)
         else:
             s = self.env.map[state]
             v = self.v(state)
-            # random_number = random.randint(0, len(valid_actions) - 1)
-            # a = random.choice(np.asarray(self._q[s] == v).nonzero()[0])      # random among those with max Q-value
-            #indices = np.asarray(self._q[s] == v).nonzero()[0]  # Get the array of valid indices
-            #chosen_index = self.env._rng(indices)              # Randomly choose one index
-            #action = valid_actions[chosen_index]
-            a = self.env._rng.choice(np.asarray(self._q[s] == v).nonzero()[0])      # random among those with max Q-value
+           
+            a = self.env.random_with_seed.choice(np.asarray(self._q[s] == v).nonzero()[0])      # random among those with max Q-value
             action = valid_actions[a]
 
         return action
@@ -157,7 +148,6 @@ class QLearning():
                 f"Avg reward: {avg_episode_reward:.1f} - "
                 f"Avg length: {avg_episode_length:.1f}"
             )
-            #print(self.v(INITIAL_STATE))
             initial_state_values.append(self.v(INITIAL_STATE))
             
         return stats, initial_state_values 

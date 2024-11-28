@@ -1,6 +1,7 @@
-from utils import *
+from utils import decide_random, Experience, running_average
 from collections import defaultdict
 from tqdm import trange
+import numpy as np 
 
 INITIAL_STATE = ((0, 0), (6, 5), "NOKEYS")
 
@@ -12,16 +13,15 @@ class SARSA():
             epsilon: float | str,
             discount: float, 
             alpha: float | None = None,
-            epsilon_decay_duration: int | None = None,
             q_init: float = 0,
+            delta: float = 1,
     ):
         self.env = env
         self.discount = discount
         self.epsilon = epsilon
-        self.epsilon_decay_episodes = epsilon_decay_duration
         self.alpha = alpha
         self.q_init = q_init
-        
+        self.delta = delta
         self._q = [
             (self.q_init if not env.terminal_state(env.states[state]) else 0) *
             np.ones(len(self.env.possible_actions(env.states[state])))
@@ -76,25 +76,19 @@ class SARSA():
             state,
             explore: bool = True,
     ):
-
+        
         valid_actions = self.env.possible_actions(state)
 
         epsilon = self.epsilon
-
-        if explore and decide_random(self.env._rng, epsilon):
+        if explore and decide_random(self.env.random_with_seed, epsilon):
             # random_number = random.randint(0, len(valid_actions) - 1)
             
             # action = valid_actions[random_number]
-            action = self.env._rng.choice(valid_actions)
+            action = self.env.random_with_seed.choice(valid_actions)
         else:
             s = self.env.map[state]
             v = self.v(state)
-            # random_number = random.randint(0, len(valid_actions) - 1)
-            # a = random.choice(np.asarray(self._q[s] == v).nonzero()[0])      # random among those with max Q-value
-            #indices = np.asarray(self._q[s] == v).nonzero()[0]  # Get the array of valid indices
-            #chosen_index = self.env._rng(indices)              # Randomly choose one index
-            #action = valid_actions[chosen_index]
-            a = self.env._rng.choice(np.asarray(self._q[s] == v).nonzero()[0])      # random among those with max Q-value
+            a = self.env.random_with_seed.choice(np.asarray(self._q[s] == v).nonzero()[0])      # random among those with max Q-value
             action = valid_actions[a]
 
         return action
@@ -102,6 +96,7 @@ class SARSA():
     def train(
             self,
             n_episodes: int,
+            decrease_epsilon: bool = False,
     ):
         
         stats = defaultdict(list)
@@ -113,7 +108,9 @@ class SARSA():
             done = False
             state = self.env.reset()
             episode_reward, episode_length = 0, 0
-
+            if decrease_epsilon: 
+                temp = 1 / (episode ** self.delta)
+                self.epsilon = temp
             # Run episode
             while not done:
                 # Interact with the environment
@@ -175,5 +172,4 @@ class SARSA():
         self._n[s][a] += 1
         step_size = 1 / (self._n[s][a] ** self.alpha)
         self._q[s][a] += step_size * (reward + self.discount * (self._q[s_next][a_next]) - self._q[s][a])
-
         return {}

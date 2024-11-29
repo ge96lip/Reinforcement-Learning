@@ -93,7 +93,7 @@ def survival_rates_dynprog(maze, T_range, minotaur_stay = False):
     return sr, policies
 
 
-def survival_rate_valiter(maze, mean_lifetime, min_steps, minotaur_stay = False):
+def survival_rate_valiter(maze, mean_lifetime, minotaur_stay = False):
    
     env = Maze(maze, allow_minotaur_stay=minotaur_stay)
 
@@ -119,7 +119,7 @@ def survival_rate_valiter(maze, mean_lifetime, min_steps, minotaur_stay = False)
     rate = won/simulation_num
     avg_path_len = total_path_len/simulation_num
 
-    print("Survived {:%}, compared to {:%} baseline".format(rate, 1-stats.geom.cdf(min_steps, 1/mean_lifetime)))
+    print("Survived {:%}".format(rate))
     print("Avg. lifetime ", avg_path_len-1)
 
     return rate

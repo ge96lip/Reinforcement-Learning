@@ -2,7 +2,7 @@ import numpy as np
 from collections import defaultdict
 from tqdm import trange
 
-from utils import decide_random, calculate_moving_average
+from utils import decide_random
 
 NUM_EPISODES = 50000
 INITIAL_STATE = ((0, 0), (6, 5), "NOKEYS")
@@ -29,7 +29,6 @@ class QLearning():
             for state in self.env.states
         ]
         #print(self.env.possible_actions)
-        # Initialize self._n with detailed debugging
         self._n = []
         for state_idx, state in self.env.states.items():
             try:
@@ -53,24 +52,6 @@ class QLearning():
         q = self._q[s][a]
         return q
     
-    def _a_idx(self, state, action):
-        #print("original action is: ", action)
-        valid_actions = self.env.possible_actions(state)
-        
-        # Find the index of the action in the valid_actions list
-        try:
-            action_index = valid_actions.index(action)
-            #print("Action index is: ", action_index)
-            return action_index
-        except ValueError:
-            print("Action not found in valid actions!")
-            return -1 
-    
-    def v(self, state):
-        s = self.env.map[state]
-        v = max(self._q[s])
-        return v
-    
     def compute_action(
             self,
             state,
@@ -86,7 +67,8 @@ class QLearning():
             action = self.env.random_with_seed.choice(valid_actions)
         else:
             s = self.env.map[state]
-            v = self.v(state)
+            
+            v = max(self._q[s])
            
             a = self.env.random_with_seed.choice(np.asarray(self._q[s] == v).nonzero()[0])      # random among those with max Q-value
             action = valid_actions[a]
@@ -98,7 +80,6 @@ class QLearning():
             n_episodes: int,
     ):
         
-        stats = defaultdict(list)
         episodes = trange(1, n_episodes + 1, desc='Episode: ', leave=True)
         initial_state_values = []
         
@@ -122,28 +103,20 @@ class QLearning():
                     "next_state": next_state,
                     "done": done
                 }
-                update_stats = self.update(last_state)
+                self.update(last_state)
 
-                for k, v in update_stats.items():
-                    stats[k].append(v)
                 episode_reward += reward
                 episode_length += 1
 
                 # Update state
                 state = next_state
-
-            stats["episode_reward"].append(episode_reward)
-            stats["episode_length"].append(episode_length)
-
-            # Show progress
-            episodes.set_description(
-                f"Episode {episode} - "
-                f"Avg reward: {(calculate_moving_average(stats["episode_reward"])[-1]):.1f} - "
-                f"Avg length: {(calculate_moving_average(stats["episode_length"])[-1]):.1f}"
-            )
-            initial_state_values.append(self.v(INITIAL_STATE))
+            s_index = self.env.map[INITIAL_STATE]
+            v = max(self._q[s_index])
+            initial_state_values.append(v)
             
-        return stats, initial_state_values 
+        #return stats, initial_state_values 
+        return initial_state_values 
+
         
     def update(self, last_state):
         # Unpack last experience
@@ -151,11 +124,12 @@ class QLearning():
         action = last_state["action"]
         reward = last_state["reward"]
         next_state = last_state["next_state"]
+        valid_actions = self.env.possible_actions(state)
 
         # Get indices
         s = self.env.map[state]
-
-        a = self._a_idx(state, action)
+        a = valid_actions.index(action)
+        
         s_next = self.env.map[next_state]
         # Update Q-function
         self._n[s][a] += 1

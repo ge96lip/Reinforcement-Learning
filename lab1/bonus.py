@@ -324,7 +324,7 @@ agent_q_learning = QLearning(
         epsilon=epsilon1,
         q_init=0.1,
     )
-_, values_epsilon1 = agent_q_learning.train(NUM_EPISODES)
+values_epsilon1 = agent_q_learning.train(NUM_EPISODES)
 exit_probability = minotaur_maze_exit_probability(env1, agent_q_learning)
 print(f"Exit_probability for QLearning Agent: ", exit_probability)
 
@@ -340,7 +340,7 @@ agent_sarsa = SARSA(
         q_init=0.01,
         delta = 0.3
     )
-_, values_epsilon2 = agent_sarsa.train(NUM_EPISODES, decrease_epsilon=True)
+values_epsilon2 = agent_sarsa.train(NUM_EPISODES, decrease_epsilon=True)
 exit_probability = minotaur_maze_exit_probability(env2, agent_sarsa)
 print(f"Exit_probability for SARSA agent: ", exit_probability)
 

@@ -10,19 +10,10 @@ import matplotlib.pyplot as plt
 from tqdm import trange
 from DQN_agent import RandomAgent, DQNAgent
 import warnings
+from utils import running_average
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-def running_average(x, N):
-    ''' Function used to compute the running average
-        of the last N elements of a vector x
-    '''
-    if len(x) >= N:
-        y = np.copy(x)
-        y[N-1:] = np.convolve(x, np.ones((N, )) / N, mode='valid')
-    else:
-        y = np.zeros_like(x)
-    return y
 
 # Import and initialize the discrete Lunar Lander Environment
 env = gym.make('LunarLander-v3')
@@ -35,7 +26,7 @@ env.reset()
 
 # Parameters
 N_episodes = 600                          # Number of episodes
-discount_factor = 0.95                       # Value of the discount factor
+discount_factor = 0.99                       # Value of the discount factor
 n_ep_running_average = 50                    # Running average of 50 episodes
 n_actions = env.action_space.n               # Number of available actions
 dim_state = len(env.observation_space.high)  # State dimensionality
@@ -46,11 +37,11 @@ episode_reward_list = []       # this list contains the total reward per episode
 episode_number_of_steps = []   # this list contains the number of steps per episode
 
 # Random agent initialization
-N = 64 
-L = 10000
-C = L // N
+N = 32
+L = 5000
+C = 10
 print("retraining every: ", C)
-agent = DQNAgent(N_episodes, n_actions, dim_state, buffer_size=L, batch_size=N, gamma=discount_factor) #RandomAgent(n_actions)
+agent = DQNAgent(n_actions, dim_state, gamma=discount_factor) # buffer_size=L, batch_size=N, gamma=discount_factor, update_target = C RandomAgent(n_actions)
 
 ### Training process
 patience = 100  # Number of episodes to wait for improvement
@@ -87,10 +78,8 @@ for episode in EPISODES:
         state = next_state
         t+= 1
     # Decay epsilon
-    # agent.epsilon = max(agent.epsilon_min, (agent.epsilon * agent.epsilon_decay))
-    agent.epsilon = max(agent.epsilon_min,
-            agent.epsilon_max * (agent.epsilon_min / agent.epsilon_max) ** ((episode - 1) / (agent.epsilon_decay_duration - 1))
-        )
+    agent.epsilon = max(agent.epsilon_min, (agent.epsilon * agent.epsilon_decay))
+    
     # Update the target network every few episodes
     if episode % agent.update_target == 0:
         agent.update_target_network()
@@ -107,12 +96,12 @@ for episode in EPISODES:
     else:
         no_improvement += 1
 
-    if no_improvement >= patience and avg_reward > 50:
+    """if no_improvement >= patience and avg_reward >= 55:
         print(f"Early stopping at episode {episode} - No improvement in the last {patience} episodes.")
         break
     if avg_reward >= 60: 
         print(f"Early stopping at episode {episode} - Got average reward over 60.")
-        break
+        break"""
 
     # Update progress bar
     EPISODES.set_description(
@@ -120,7 +109,7 @@ for episode in EPISODES:
 
     
 # Save the trained Q-network
-name = f'neural-network-NN64Episodes{N_episodes}Gamma{discount_factor}'
+name = f'neural-network-groundtruth-Gamma{discount_factor}-Episodes{N_episodes}'
 torch.save(agent.network.state_dict(), './weights/'+name+'.pth')
 # Close environment
 env.close()

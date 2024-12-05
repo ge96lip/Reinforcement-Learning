@@ -49,7 +49,7 @@ class RandomAgent(Agent):
         return self.last_action
     
 class DQNAgent(Agent):
-    def __init__(self, episodes, n_actions, state_dim, buffer_size=5000, batch_size=32, gamma=0.99, lr=5e-4, epsilon=0.99, epsilon_min=0.05, epsilon_decay=0.995, hidden_size = 64):
+    def __init__(self, n_actions, state_dim, buffer_size=10000, batch_size=32, gamma=0.99, lr=1e-3, epsilon=1, epsilon_min=0.01, epsilon_decay=0.995, hidden_size = 128, update_target = 10):
         super().__init__(n_actions)
         self.state_dim = state_dim
         self.gamma = gamma
@@ -57,9 +57,7 @@ class DQNAgent(Agent):
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
         self.batch_size = batch_size
-        self.update_target = buffer_size / batch_size
-        self.epsilon_max = 0.99
-        self.epsilon_decay_duration = int(.9 * episodes)
+        self.update_target = update_target
         
         # Initialize the DQN and target networks
         self.network = DQNNetwork(input_size=state_dim, output_size=n_actions, hidden_size = hidden_size)

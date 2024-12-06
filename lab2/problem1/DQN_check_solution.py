@@ -9,6 +9,7 @@ import gymnasium as gym
 import torch
 from tqdm import trange
 import warnings
+from classes import DQNNetwork
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
@@ -23,16 +24,23 @@ def running_average(x, N):
         y = np.zeros_like(x)
     return y
 
+
+
+# Import and initialize Mountain Car Environment
+env = gym.make('LunarLander-v3')
 # Load model
 try:
     model = torch.load('neural-network-1.pth')
+    #input_dim = env.observation_space.shape[0]  # Adjust to your environment
+    #output_dim = env.action_space.n            # Adjust to your environment
+
+    #model = DQNNetwork(input_dim, output_dim, 128)
+    #model.load_state_dict(torch.load('neural-network-1.pth'))
+    #model.eval()
     print('Network model: {}'.format(model))
 except:
     print('File neural-network-1.pth not found!')
     exit(-1)
-
-# Import and initialize Mountain Car Environment
-env = gym.make('LunarLander-v2')
 # If you want to render the environment while training run instead:
 # env = gym.make('LunarLander-v2', render_mode = "human")
 

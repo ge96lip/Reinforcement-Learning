@@ -109,8 +109,8 @@ for episode in EPISODES:
 
     
 # Save the trained Q-network
-name = f'neural-network-groundtruth-Gamma{discount_factor}-Episodes{N_episodes}'
-torch.save(agent.network.state_dict(), './weights/'+name+'.pth')
+name = f'neural-network-groundtruth-Gamma{discount_factor}-Episodes{N_episodes}-not_dict'
+torch.save(agent.network, './weights/'+name+'.pth')
 # Close environment
 env.close()
 

@@ -30,7 +30,7 @@ discount_factor = 0.99                       # Value of the discount factor
 n_ep_running_average = 50                    # Running average of 50 episodes
 n_actions = env.action_space.n               # Number of available actions
 dim_state = len(env.observation_space.high)  # State dimensionality
-
+buffer_size = 3000
 # We will use these variables to compute the average episodic reward and
 # the average number of steps per episode
 episode_reward_list = []       # this list contains the total reward per episode
@@ -41,7 +41,7 @@ N = 32
 L = 5000
 C = 10
 print("retraining every: ", C)
-agent = DQNAgent(n_actions, dim_state, gamma=discount_factor) # buffer_size=L, batch_size=N, gamma=discount_factor, update_target = C RandomAgent(n_actions)
+agent = DQNAgent(n_actions, dim_state, gamma=discount_factor, buffer_size=buffer_size) # buffer_size=L, batch_size=N, gamma=discount_factor, update_target = C RandomAgent(n_actions)
 
 ### Training process
 patience = 100  # Number of episodes to wait for improvement
@@ -109,7 +109,7 @@ for episode in EPISODES:
 
     
 # Save the trained Q-network
-name = f'neural-network-groundtruth-Gamma{discount_factor}-Episodes{N_episodes}-not_dict'
+name = f'neural-network-groundtruth-Buffer{buffer_size}'
 torch.save(agent.network, './weights/'+name+'.pth')
 # Close environment
 env.close()

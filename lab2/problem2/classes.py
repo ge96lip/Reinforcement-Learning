@@ -39,6 +39,9 @@ class ExperienceReplayBuffer:
         indices = np.random.choice(len(self.buffer), size=n, replace=False) # Random sampling
         batch = [self.buffer[i] for i in indices] # Create a batch from sampledindices
         return zip(*batch) # Unzip batch into state, action, reward, next_state,and done
+    def get_all_states(self):
+        """Retrieve all states stored in the buffer."""
+        return [experience[0] for experience in self.buffer]
     
 
 class ActorNetwork(nn.Module):

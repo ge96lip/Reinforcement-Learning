@@ -46,9 +46,9 @@ def ddpg_training(episodes, env, agent, n_ep_running_average = 50  ):
             i, total_episode_reward, t,
             running_average(episode_reward_list, n_ep_running_average)[-1],
             running_average(episode_number_of_steps, n_ep_running_average)[-1]))
-    name = './weights/neural-network-2'
-    torch.save(agent.actor, name + '-actor'+'.pth')
-    torch.save(agent.critic, name + '-critic'+'.pth')
+    name = f'./weights/neural-network-2-episodes{agent.gamma}'
+    #torch.save(agent.actor, name + '-actor'+'.pth')
+    #torch.save(agent.critic, name + '-critic'+'.pth')
     return episode_reward_list, episode_number_of_steps
 
 def ddpg_training1(episodes, env, agent, n_ep_running_average = 50): 

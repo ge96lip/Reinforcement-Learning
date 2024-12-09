@@ -76,11 +76,13 @@ class DDPGAgent(Agent):
         # Noise parameters
         self.noise_mu = 0.0
         self.noise_sigma = 0.2
+        self.noise_values = []
 
     def select_action(self, state):
         state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
         action = self.actor(state).detach().cpu().numpy().flatten()
         noise = np.random.normal(self.noise_mu, self.noise_sigma, size=self.n_actions)
+        self.noise_values.append(noise)
         action = action + noise
         return np.clip(action, -self.max_action, self.max_action)
 

@@ -33,8 +33,8 @@ state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.shape[0]
 max_action = env.action_space.high[0]
 print("m is: ", m, "action dim is: ", action_dim)
-
-agent = DDPGAgent(state_dim, action_dim, max_action)
+buffer_size=5000
+agent = DDPGAgent(state_dim, action_dim, max_action, gamma=0.99, buffer_size=buffer_size)
 # Reward
 
 # Agent initialization
@@ -67,4 +67,6 @@ ax[1].set_ylabel('Total number of steps')
 ax[1].set_title('Total number of steps vs Episodes')
 ax[1].legend()
 ax[1].grid(alpha=0.3)
+name = f'./figures/neural-network-2-memory{buffer_size}'
+plt.savefig(name + '.png')
 plt.show()

@@ -224,13 +224,13 @@ def train(env, N_episodes, discount_factor, lambda_, base_learning_rate, epsilon
     return episode_reward_list, weights, eligibility_traces
 
 
-def analyze_learning_rate_alpha(alphas, env, N_episodes, discount_factor, lambda_, epsilon, exploration_decay, learning_rate_decay, momentum, order, include_constant, show_plots):
+def analyze_learning_rate_alpha(alphas, env, N_episodes, discount_factor, lambda_, epsilon, exploration_decay, learning_rate_decay, momentum, order, include_constant, show_plots, custom_exploration):
     """Analyze the effect of learning rate (α) on average total reward."""
     avg_rewards = []
     std_errs = []
 
     for alpha in alphas:
-        episode_rewards = train(env, N_episodes, discount_factor, lambda_, alpha, epsilon, exploration_decay, learning_rate_decay, momentum, order, include_constant, show_plots)
+        episode_rewards ,_,_  = train(env, N_episodes, discount_factor, lambda_, alpha, epsilon, exploration_decay, learning_rate_decay, momentum, order, include_constant, show_plots, custom_exploration)
         avg_rewards.append(np.mean(episode_rewards))
         std_errs.append(sem(episode_rewards))
 
@@ -252,7 +252,7 @@ def analyze_eligibility_trace_lambda(lambdas, num_runs=50):
     for lambda_ in lambdas:
         total_rewards = []
 
-        total_rewards = train(env, N_episodes, discount_factor, lambda_, base_learning_rate, epsilon, exploration_decay, learning_rate_decay, momentum, order, include_constant, show_plots)
+        total_rewards, _, _ = train(env, N_episodes, discount_factor, lambda_, base_learning_rate, epsilon, exploration_decay, learning_rate_decay, momentum, order, include_constant, show_plots, custom_exploration)
 
         avg_rewards.append(np.mean(total_rewards))
         std_errs.append(sem(total_rewards))
@@ -270,20 +270,20 @@ def analyze_eligibility_trace_lambda(lambdas, num_runs=50):
 
 #Train the agent
 show_plots = True
-custom_exploration = True
+custom_exploration = False
+#N_episodes = 50
 rewards, weights, eligibitlity =  train(env, N_episodes, discount_factor, lambda_, base_learning_rate, epsilon, exploration_decay, learning_rate_decay, momentum, order, include_constant, show_plots, custom_exploration)
 show_plots = False
 # Create a dictionary to store W and N
-data = {'W': weights, 'N': eligibitlity}
-print(weights.shape())
-print(eligibitlity.shape())
+#data = {'W': weights, 'N': eligibitlity}
 
-# Save the dictionary to a file using pickle
-file_name = "weights.pkl"
-with open(file_name, 'wb') as file:
-    pickle.dump(data, file)
 
-print(f"Matrices W and N saved successfully to {file_name}.")
+# # Save the dictionary to a file using pickle
+# file_name = "weights.pkl"
+# with open(file_name, 'wb') as file:
+#     pickle.dump(data, file)
+
+#print(f"Matrices W and N saved successfully to {file_name}.")
 
 # Define hyperparameter ranges
 alphas = [0.0001, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.05, 0.1]
@@ -293,5 +293,5 @@ lambdas = np.linspace(0.1, 1, 20)
 N_episodes = 50
 
 # Perform the analyses
-#analyze_learning_rate_alpha(alphas, env, N_episodes, discount_factor, lambda_, epsilon, exploration_decay, learning_rate_decay, momentum, order, include_constant, show_plots)
+#_,_,_ = analyze_learning_rate_alpha(alphas, env, N_episodes, discount_factor, lambda_, epsilon, exploration_decay, learning_rate_decay, momentum, order, include_constant, show_plots, custom_exploration)
 #analyze_eligibility_trace_lambda(lambdas, num_runs=10)

@@ -286,11 +286,11 @@ show_plots = False
 #print(f"Matrices W and N saved successfully to {file_name}.")
 
 # Define hyperparameter ranges
-alphas = [0.0001, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.05, 0.1]
-#alphas = np.linspace(0.001, 0.1, 10)
-lambdas = [0.1, 0.3, 0.5, 0.7, 0.9]
-lambdas = np.linspace(0.1, 1, 20)
-N_episodes = 50
+# alphas = [0.0001, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.05, 0.1]
+# #alphas = np.linspace(0.001, 0.1, 10)
+# lambdas = [0.1, 0.3, 0.5, 0.7, 0.9]
+# lambdas = np.linspace(0.1, 1, 20)
+# N_episodes = 50
 
 # Perform the analyses
 #_,_,_ = analyze_learning_rate_alpha(alphas, env, N_episodes, discount_factor, lambda_, epsilon, exploration_decay, learning_rate_decay, momentum, order, include_constant, show_plots, custom_exploration)

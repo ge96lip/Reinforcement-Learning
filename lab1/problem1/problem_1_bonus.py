@@ -1,8 +1,12 @@
+# Carlotta Sophia Hölzle || 20020521-8167 || csholzle@kth.se
+# Jannis || jannise@kth.se || 20010411-1653
+
 import numpy as np
 from lab1.problem1.utils import decide_random
 import matplotlib.pyplot as plt 
 from lab1.problem1.q_agent import QLearning
 from lab1.problem1.sarsa_agent import SARSA
+
 
 class Maze:
 

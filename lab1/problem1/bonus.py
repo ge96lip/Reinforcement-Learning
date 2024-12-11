@@ -1,34 +1,9 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import time
-from IPython import display
-import scipy.stats as stats
+from lab1.problem1.utils import decide_random
+import matplotlib.pyplot as plt 
+from lab1.problem1.q_agent import QLearning
+from lab1.problem1.sarsa_agent import SARSA
 
-from q_agent import QLearning
-from sarsa_agent import SARSA
-import random
-
-# Implemented methods
-methods = ['DynProg', 'ValIter']
-
-# Some colours
-LIGHT_RED    = '#FFC4CC'
-LIGHT_GREEN  = '#95FD99'
-BLACK        = '#000000'
-WHITE        = '#FFFFFF'
-LIGHT_PURPLE = '#E8D0FF'
-LIGHT_ORANGE = '#FAE0C3'
-
-    
-
-
-def decide_random(rng, probability):
-    #rand = np.random.uniform()
-    #return (rand < probability)
-    temp = rng.binomial(n=1, p=probability)
-    return (temp == 1)
-
-    # return np.random.binomial(n=1, p=probability) == 1
 class Maze:
 
     # Actions
@@ -48,44 +23,31 @@ class Maze:
     }
 
     # Reward values
-    
     STEP_REWARD = 0         #TODO
     KEY_REWARD = 1
     GOAL_REWARD = 1         #TODO
-    IMPOSSIBLE_REWARD =  0  #TODO
-    LOSS_REWARD = -50      #TODO
 
 
     def __init__(self, 
                  maze, 
                  seed,
-                 horizon: int | None = None,
                  allow_minotaur_stay: bool = False, 
                  expected_life: float = 1, 
                  minotaur_chase: bool = False, 
                  keys: bool = False
                  ):
-        """ Constructor of the environment Maze.
-        """
+
         self.maze = maze
-        self.horizon = horizon
         self.temp_position = (-1, -1)
         self.poise_probability = (1/expected_life)
         self.minotaur_chase = minotaur_chase
-        self.keys = keys
-        self.finite_horizon = horizon
-        #self.key_position             = (0,7)
-        self.start_position           = ((0,0), (6,5))
         self.allow_minotaur_stay      = allow_minotaur_stay
         self.actions                  = self.__actions()
         self.states, self.map         = self.__states()
         self.n_actions                = len(self.actions)
         self.n_states                 = len(self.states)
-        self._initial_state = ((0,0), (6,5), "NOKEYS")
-        self._rng = np.random.RandomState(seed)
-        self.moves_cache = dict()
-        assert not (self.poise_probability > 0 and self.finite_horizon is not None)    # poison only for discounted MDPs
-
+        self.initial_state = ((0,0), (6,5), "NOKEYS")
+        self.random_with_seed = np.random.RandomState(seed)
         
 
     def __actions(self):
@@ -144,7 +106,7 @@ class Maze:
         # Return the results
         return reindexed_states, reindexed_map
 
-    def get_position(self, agent_position, action, is_player): 
+    def get_position(self, agent_position, action): 
         x, y = agent_position
 
         if action == self.MOVE_UP or action == 0:
@@ -158,59 +120,8 @@ class Maze:
         elif action == self.STAY or action == 4:
             pass
         else:
-            raise ValueError(f"Invalid move {action}")
+            pass
         return (x, y)
-    
-    def __move_minotaur(self, state, actions_minotaur, only_valid = True): 
-        minotaur_actions = []
-        
-        # Check if the current state is terminal
-        if self.terminal_state(state):
-            minotaur_actions.append(self.STAY)
-        elif not self.minotaur_chase: 
-            if np.random.rand() < 0.35:
-                minotaur_actions = []
-                mx, my = self.states[state][1][0], self.states[state][1][1]  # Minotaur's position
-                ax, ay = self.states[state][0][0], self.states[state][0][1]  # Player's position
-                
-                # Determine the chase direction
-                if ax > mx:
-                    minotaur_actions.append(self.MOVE_RIGHT)
-                elif ax < mx:
-                    minotaur_actions.append(self.MOVE_LEFT)
-                if ay > my:
-                    minotaur_actions.append(self.MOVE_DOWN)
-                elif ay < my:
-                    minotaur_actions.append(self.MOVE_UP)
-                
-                # If no specific direction is determined, add all potential moves
-                if not minotaur_actions:
-                    minotaur_actions = [self.MOVE_UP, self.MOVE_DOWN, self.MOVE_LEFT, self.MOVE_RIGHT]
-            # Validate actions to ensure they do not result in the Minotaur leaving the environment
-            valid_actions = []
-            for action in minotaur_actions:
-                # Calculate the new position after applying the action
-                new_position = tuple(map(sum, zip((mx, my), self.actions[action])))
-                
-                # Check if the new position is within the maze boundaries
-                if all(0 <= new_position[i] < self.maze.shape[i] for i in range(len(new_position))):
-                    valid_actions.append(action)
-            
-            minotaur_actions = valid_actions
-        else: 
-            # Use provided actions, validating them as well
-            for action in actions_minotaur:
-                
-                new_state = tuple(map(sum, zip(state[1], self.actions[action])))
-                if all(0 <= new_state[i] < self.maze.shape[i] for i in range(len(new_state))):
-                    minotaur_actions.append(action)
-
-        # Choose a random valid action
-        if minotaur_actions:  # Ensure there are valid actions before choosing
-            random_number = random.randint(0, len(minotaur_actions) - 1)
-            return minotaur_actions[random_number]
-        else:
-            return self.STAY 
 
     def _valid_minotaur_moves(self, state, chase):
         valid_moves = self._chase_minotaur_moves(state) if chase else self._random_minotaur_moves(state)
@@ -249,13 +160,13 @@ class Maze:
 
             delta_x = x_player - x_minotaur
             delta_y = y_player - y_minotaur
-            assert abs(delta_x) > 0 or abs(delta_y) > 0  # otherwise it should be eaten (terminal state)
             
             if delta_x != 0 and (delta_y == 0 or abs(delta_x) <= abs(delta_y)):
                 if delta_x < 0:
                     chase_moves.append(self.MOVE_UP)
                 else:
                     chase_moves.append(self.MOVE_DOWN)
+                    
             if delta_y != 0 and (delta_x == 0 or abs(delta_y) <= abs(delta_x)):
                 if delta_y < 0:
                     chase_moves.append(self.MOVE_LEFT)
@@ -263,53 +174,42 @@ class Maze:
                     chase_moves.append(self.MOVE_RIGHT)
 
         return chase_moves
-
-    def reward(self, previous_state, current_state, action):
-
-        reward = self._reward(previous_state, current_state)
-
-        return reward
     
-    def _reward(self, state, next_state):
-        _, _, progress = state
+    def reward(self, previous_state, next_state):
+        _, _, progress = previous_state
         _, _, next_progress = next_state
 
         # terminal state (absorbing): nothing happens
-        if self.terminal_state(state):
+        if self.terminal_state(previous_state):
             reward = 0
-
-        elif next_progress != "EATEN" and \
-                progress == "NOKEYS" and next_progress == "KEYS":
+        elif next_progress != "EATEN" and progress == "NOKEYS" and next_progress == "KEYS":
             reward = self.KEY_REWARD
-        elif next_progress !=  "EATEN" and \
-                progress == "KEYS" and next_progress == "WIN":
+        elif next_progress !=  "EATEN" and progress == "KEYS" and next_progress == "WIN":
             reward = self.GOAL_REWARD
         else:
             reward = self.STEP_REWARD
 
         return reward
     
-    def _next_state(self, state, action, minotaur_move = None):
+    def _next_state(self, state, action):
         
         player_position, minotaur_position, progress = state
 
         if self.terminal_state(state):
             print("terminal state")
             pass 
+        
         else:
-            if minotaur_move is None:
-                #actions_minotaur = [self.MOVE_DOWN, self.MOVE_UP, self.MOVE_RIGHT, self.MOVE_LEFT] # Possible moves for the Minotaur
-                #if self.allow_minotaur_stay:
-                 #   actions_minotaur.append(self.STAY)+  chase = self.minotaur_chase and decide_random(self._probability_chase_move)
-                chase = self.minotaur_chase and decide_random(self._rng, 0.35)
-                action_minotaur = self._valid_minotaur_moves(state, chase)
-                
-                #chase = self.minotaur_chase and np.random.rand() < 0.35
-                #valid_minotaur_moves = self._valid_minotaur_moves(state, chase=chase)
-                action_minotaur = self._rng.choice(action_minotaur)
+            
+            chase = self.minotaur_chase and decide_random(self.random_with_seed, 0.35)
+            action_minotaur = self._valid_minotaur_moves(state, chase)
+            
+            #chase = self.minotaur_chase and np.random.rand() < 0.35
+            #valid_minotaur_moves = self._valid_minotaur_moves(state, chase=chase)
+            action_minotaur = self.random_with_seed.choice(action_minotaur)
 
-            next_player_position = self.get_position(player_position, action, True)
-            next_minotaur_position = self.get_position(minotaur_position, action_minotaur, False)
+            next_player_position = self.get_position(player_position, action)
+            next_minotaur_position = self.get_position(minotaur_position, action_minotaur)
 
             x, y = next_player_position
             if next_player_position == next_minotaur_position:
@@ -326,8 +226,7 @@ class Maze:
         return state
     
     def terminal_state(self, state):
-        _, _, progress = state
-        if progress in ["EATEN", "WIN"]: 
+        if state[2] in ["EATEN", "WIN"]: 
             terminal = True
         else: 
             terminal = False  
@@ -360,24 +259,18 @@ class Maze:
         return valid_moves
     
     def _horizon_reached(self):
-        # random time horizon geometrically distributed
         if self.poise_probability > 0:
-            horizon_reached = decide_random(self._rng, self.poise_probability)
+            horizon_reached = decide_random(self.random_with_seed, self.poise_probability)
         else:
             print("Poise Probability needs to be bigger than 0")
         return horizon_reached
-
-    
-    def reset(self):
-        self._current_state = self._initial_state
-        return self._current_state
     
     def step(self, action, previous_state):
         
         # update state
         new_state = self._next_state(previous_state, action)
 
-        reward = self.reward(previous_state, new_state, action)
+        reward = self.reward(previous_state, new_state)
         
         horizon_reached = self._horizon_reached()
         terminal = self.terminal_state(new_state)
@@ -390,11 +283,10 @@ class Maze:
 def minotaur_maze_exit_probability(environment, agent):
     n_episodes = 100
     n_wins = 0
-    for episode in range(1, n_episodes+1):
+    for _ in range(1, n_episodes+1):
         done = False
         time_step = 0
-        #environment.seed(episode)
-        state = environment.reset()
+        state = environment.initial_state
         while not done:
             action = agent.compute_action(state=state, explore=False)
             state, _, done, won = environment.step(action, state)
@@ -403,6 +295,9 @@ def minotaur_maze_exit_probability(environment, agent):
     exit_probability = n_wins / n_episodes
     return exit_probability
 
+
+
+"""#for testing structural changes of the implementation: 
 NUM_EPISODES = 5000
 INITIAL_STATE = ((0, 0), (6, 5), "NOKEYS")
 maze = np.array([
@@ -429,9 +324,10 @@ agent_q_learning = QLearning(
         epsilon=epsilon1,
         q_init=0.1,
     )
-#_, values_epsilon1 = agent_q_learning.train(NUM_EPISODES)
-#exit_probability = minotaur_maze_exit_probability(env1, agent_q_learning)
-#print(f"Exit_probability for QLearning Agent: ", exit_probability)
+values_epsilon1 = agent_q_learning.train(NUM_EPISODES)
+exit_probability = minotaur_maze_exit_probability(env1, agent_q_learning)
+print(f"Exit_probability for QLearning Agent: ", exit_probability)
+
 
 epsilon2 = 0.1
 alpha2 = (2/3)
@@ -441,40 +337,20 @@ agent_sarsa = SARSA(
         discount=gamma,
         alpha=alpha2,
         epsilon=epsilon2,
-        q_init=1,
+        q_init=0.01,
+        delta = 0.3
     )
-_, values_epsilon2 = agent_sarsa.train(NUM_EPISODES)
+values_epsilon2 = agent_sarsa.train(NUM_EPISODES, decrease_epsilon=True)
 exit_probability = minotaur_maze_exit_probability(env2, agent_sarsa)
 print(f"Exit_probability for SARSA agent: ", exit_probability)
 
 plt.figure(figsize=(10, 6))
-#plt.plot(range(NUM_EPISODES), values_epsilon1, label=f"$\\alpha = {alpha1}$")
-plt.plot(range(NUM_EPISODES), values_epsilon2, label=f"$\\alpha = {alpha2}$")
+plt.plot(range(NUM_EPISODES), values_epsilon1, label=f"$\\delta = {1}$")
+plt.plot(range(NUM_EPISODES), values_epsilon2, label=f"$\\delta = {0.3}$")
 plt.xlabel("Episodes")
 plt.ylabel(f"Value Function $V(s_0)$")
 plt.title("Convergence of Value Function Over Episodes with different alpha values")
 plt.legend()
 plt.grid()
-plt.show()
+plt.show()"""
 
-"""
-env1 = Maze(maze, seed=6, expected_life=expected_life, minotaur_chase=True, keys=True)
-env2 = Maze(maze, seed=6, expected_life=expected_life, minotaur_chase=True, keys=True)
-
-epsilon1 = 0.1
-epsilon2 = 0.3
-
-values_epsilon1 = train_agent(env1, epsilon1, NUM_EPISODES)
-values_epsilon2 = train_agent(env2, epsilon2, NUM_EPISODES)
-
-# Plot the value function over episodes
-plt.figure(figsize=(10, 6))
-plt.plot(range(NUM_EPISODES), values_epsilon1, label=f"$\epsilon = {epsilon1}$")
-plt.plot(range(NUM_EPISODES), values_epsilon2, label=f"$\epsilon = {epsilon2}$")
-plt.xlabel("Episodes")
-plt.ylabel(f"Value Function $V(s_0)$")
-plt.title("Convergence of Value Function Over Episodes")
-plt.legend()
-plt.grid()
-plt.show()
-"""

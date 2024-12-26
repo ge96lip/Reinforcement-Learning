@@ -76,7 +76,7 @@ for episode in EPISODES:
 
         # Update state for next iteration
         state = next_state
-        t+= 1
+        t += 1
     # Decay epsilon
     agent.epsilon = max(agent.epsilon_min, (agent.epsilon * agent.epsilon_decay))
     

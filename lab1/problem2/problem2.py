@@ -1,6 +1,8 @@
 # Copyright [2024] [KTH Royal Institute of Technology]
 # Licensed under the Educational Community License, Version 2.0 (ECL-2.0)
 # This file is part of the Computer Lab 1 for EL2805 - Reinforcement Learning.
+# Carlotta Sophia Hölzle || 20020521-8167 || csholzle@kth.se
+# Jannis || jannise@kth.se || 20010411-1653
 
 import numpy as np
 import gymnasium as gym

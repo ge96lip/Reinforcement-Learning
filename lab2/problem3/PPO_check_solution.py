@@ -32,7 +32,7 @@ except:
     exit(-1)
 
 # Import and initialize Mountain Car Environment
-env = gym.make('LunarLanderContinuous-v2')
+env = gym.make('LunarLanderContinuous-v3')
 # If you want to render the environment while training run instead:
 # env = gym.make('LunarLanderContinuous-v2', render_mode = "human")
 
